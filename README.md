@@ -1,57 +1,194 @@
-# Grouped Non-linear Kolmogorov-Arnold Network (GN-KAN)
-A pure PyTorch official implementation of the **Grouped Non-linear Kolmogorov-Arnold Network (GN-KAN)** architecture designed as an efficient, spatially aware, and highly expressive replacement for traditional Feed-Forward Networks (FFNs/MLPs) inside Vision Transformers and convolutional pipelines.
+# Grouped Nonlinear Kolmogorov–Arnold Network (GN-KAN)
 
-Traditional KAN implementations rely on heavy, memory-bound B-spline calculations with irregular memory indexing that bottlenecks modern accelerator hardware. GN-KAN factorizes this mathematical expressivity using standard, dense PyTorch operators—achieving the functional benefits of continuous grid spaces within standard asymptotic computational envelopes.
+Official PyTorch implementation of **Grouped Nonlinear Kolmogorov–Arnold Networks (GN-KAN)**, a structured feed-forward architecture that enhances nonlinear representation learning through **channel-wise specialization, spatial refinement, and adaptive gating**.
 
----
-
-## 🚀 Key Architectural Features
-
-GN-KAN factorizes the feed-forward projection step into four orthogonal dimensions of expressivity:
-
-1. **Pointwise Expansion Mapping:** A dense $1\times1$ convolution expands the representation capacity and performs cross-channel feature interaction.
-2. **Channel-wise Grouped Scaling Modulation ($\mathcal{S}$):** Instead of treating the expanded hidden dimensions as a massive, uniform pool of features, the tensor is factorized into isolated channel subspaces where learnable weights adaptively scale information flow.
-3. **Localized Spatial Message Propagation ($\mathcal{D}$):** Integrates group-isolated depthwise spatial interaction right inside the FFN to capture localized spatial relationships without expanding the parameter count.
-4. **Data-Dependent Adaptive Feature Gating ($\mathcal{G}$):** Modulates the refined spatial features using a parallel contextual gating network via a Sigmoid mask.
+GN-KAN is designed as an efficient alternative to conventional MLP- and KAN-based feed-forward networks and can be used in convolutional architectures as well as Vision Transformers.
 
 ---
 
-## 📂 Repository Structure
+## Overview
 
-* `gnkan.py`: Defines the standalone `GNKAN` pure-PyTorch FFN block processing inputs of shape `(B, C, H, W)`.
-* `sd.py`: One of the ablation modals.
+GN-KAN consists of four sequential operations:
+
+1. **Channel Expansion**
+   - Expands the input representation using a point-wise ($1\times1$) projection.
+
+2. **Grouped Scaling ($\mathcal{S}$)**
+   - Partitions expanded channels into groups and applies learnable group-specific scaling.
+
+3. **Spatial Refinement ($\mathcal{D}$)**
+   - Applies depthwise convolution to capture local spatial interactions.
+
+4. **Adaptive Gating ($\mathcal{G}$)**
+   - Learns data-dependent feature selection through a sigmoid gating mechanism before channel projection.
+
+The resulting architecture provides structured nonlinear processing while remaining fully compatible with standard PyTorch operators.
 
 ---
 
-## 📊 Algorithmic Complexity Profile
+## Repository Structure
 
-| Architecture | Asymptotic FLOPs Complexity | Parameter Footprint | Primary Hardware Profile |
-| :--- | :--- | :--- | :--- |
-| **Standard MLP** | $\mathcal{O}(2 \cdot N \cdot C \cdot C_{hid})$ | $2 \cdot C \cdot C_{hid}$ | Uniform capacity / Compute-bound |
-| **Spline-based KAN** | $\mathcal{O}(N \cdot C \cdot C_{hid} \cdot G)$ | $C \cdot C_{hid} \cdot G$ | Severe memory bound / Indexing bottlenecks |
-| **Our GN-KAN Framework**| $\mathcal{O}(2 \cdot N \cdot C \cdot C_{hid} + N \cdot C_{hid} \cdot k^2)$ | $2 \cdot C \cdot C_{hid} + C_{hid} \cdot b + C_{hid} \cdot k^2$ | Maximum GPU Tensor-Core efficiency |
+```
+GN-KAN/
+│
+├── experiments/
+│   ├── exp01_mnist_ablation_100e.py
+│   ├── exp02_fashionmnist_ablation_100e.py
+│   ├── exp03_cifar10_ablation_100e.py
+│   ├── exp04_braintumor_ablation_100e.py
+│   ├── exp05_fashionmnist_ablation_100e.py
+│   ├── exp06_cifar100_ablation_100e.py
+│   ├── exp07_robustness_ablation.py
+│   ├── exp12_data_efficiency_braintumor.py
+│   ├── exp15_scaling_study_braintumor.py
+│   └── exp16_efficiency_ablation.py
+│
+├── models/
+│   ├── gnkan.py
+│   ├── efficientkan.py
+│   ├── mlp.py
+│   └── sd.py
+│
+└── README.md
+```
 
 ---
 
-## 🛠️ Usage Example
+## Installation
+
+Clone the repository
+
+```bash
+git clone https://github.com/<username>/GN-KAN.git
+cd GN-KAN
+```
+
+Install dependencies
+
+```bash
+pip install torch torchvision pandas
+```
+
+---
+
+## Running Experiments
+
+Examples:
+
+### MNIST
+
+```bash
+python experiments/exp01_mnist_ablation_100e.py
+```
+
+### CIFAR-10
+
+```bash
+python experiments/exp03_cifar10_ablation_100e.py
+```
+
+### CIFAR-100
+
+```bash
+python experiments/exp06_cifar100_ablation_100e.py
+```
+
+### Brain Tumor MRI
+
+```bash
+python experiments/exp04_braintumor_ablation_100e.py
+```
+
+### Data Efficiency
+
+```bash
+python experiments/exp12_data_efficiency_braintumor.py
+```
+
+### Model Scaling
+
+```bash
+python experiments/exp15_scaling_study_braintumor.py
+```
+
+### Robustness
+
+```bash
+python experiments/exp07_robustness_ablation.py
+```
+
+---
+
+## GN-KAN Block
 
 ```python
 import torch
-from gnkan import GNKAN
 
-# Instantiate the standalone GN-KAN Block
-# Channels: 64, Hidden Channels (Internal Expansion): 256, Subspace Groups: 8
-gn_kan_block = GNKAN(
-    channels=64, 
-    hidden_channels=256, 
-    groups=8, 
-    spatial_kernel=3, 
-    use_gating=True
+from models.gnkan import GNKAN
+
+model = GNKAN(
+    channels=64,
+    hidden_channels=256,
+    groups=8
 )
 
-# Input tensor shape: (Batch Size, Channels, Height, Width)
-input_tensor = torch.randn(16, 64, 32, 32)
-output_tensor = gn_kan_block(input_tensor)
+x = torch.randn(8,64,32,32)
 
-print(f"Input Shape:  {input_tensor.shape}")
-print(f"Output Shape: {output_tensor.shape}") # Preserves dimensions: (16, 64, 32, 32)
+y = model(x)
+
+print(y.shape)
+```
+
+Output
+
+```
+torch.Size([8, 64, 32, 32])
+```
+
+---
+
+## Experimental Evaluation
+
+The paper evaluates GN-KAN against:
+
+- Multilayer Perceptron (MLP)
+- EfficientKAN
+
+Experiments include
+
+- Component ablation
+- Data efficiency
+- Robustness
+- Model scaling
+- Computational efficiency
+- Statistical significance analysis
+
+Benchmarks
+
+- MNIST
+- FashionMNIST
+- FashionMNIST-V2
+- CIFAR-10
+- CIFAR-100
+- Brain Tumor MRI (BRISC)
+
+---
+
+## Citation
+
+If you find this repository useful, please cite:
+
+```bibtex
+@article{thilak2026gnkan,
+  title={Grouped Nonlinear Kolmogorov--Arnold Networks for Structured Feed-Forward Learning},
+  author={Thilak, Gurram Harshamanya and Jha, Rajib Kumar},
+  journal={Under Review},
+  year={2026}
+}
+```
+
+---
+
+## License
+
+This repository is released under the MIT License.
