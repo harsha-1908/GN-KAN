@@ -1,0 +1,2 @@
+# GN-KAN
+Official PyTorch implementation of GN-KAN, GROUPED NON-LINEAR KOLMOGOROV-ARNOLD NETWORKS
