@@ -59,7 +59,7 @@ GN-KAN/
 Clone the repository
 
 ```bash
-git clone https://github.com/<username>/GN-KAN.git
+git clone https://github.com/harsha-1908/GN-KAN.git
 cd GN-KAN
 ```
 
@@ -190,5 +190,10 @@ If you find this repository useful, please cite:
 ---
 
 ## License
+# Copy Right
+
+Copyright (c) 2026  
+Gurram Harshamanya Thilak [All Rights Reserved]
+
 
 This repository is released under the MIT License.
