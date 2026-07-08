@@ -186,6 +186,9 @@ If you find this repository useful, please cite:
   year={2026}
 }
 ```
+# ⚠️ Disclaimer
+
+This repository is released strictly for **academic and research purposes**.
 
 ---
 
@@ -196,4 +199,3 @@ Copyright (c) 2026
 Gurram Harshamanya Thilak [All Rights Reserved]
 
 
-This repository is released under the MIT License.
